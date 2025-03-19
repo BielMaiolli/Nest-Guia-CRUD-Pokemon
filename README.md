@@ -378,9 +378,11 @@ Acesse o Swagger para testar a API: http://localhost:3000/api
 
 ### S - Single Responsibility Principle: Cada classe tem uma única responsabilidade
 
-Controller lida com HTTP
-Service lida com a lógica de negócios
-Repository lida com o acesso aos dados
+- Controller lida com HTTP
+
+- Service lida com a lógica de negócios
+
+- Repository lida com o acesso aos dados
 
 
 ### O - Open/Closed Principle: O código está aberto para extensão, fechado para modificação
