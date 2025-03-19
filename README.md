@@ -10,7 +10,7 @@ cd pokemon-api
 Instale as dependências necessárias:
 bashCopiarnpm install @nestjs/mongoose mongoose @nestjs/swagger class-validator class-transformer
 
-2. Configuração do MongoDB
+## 2. Configuração do MongoDB
 Edite o arquivo app.module.ts:
 typescriptCopiarimport { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -28,7 +28,7 @@ import { PokemonModule } from './pokemon/pokemon.module';
 })
 export class AppModule {}
 
-3. Configuração do Swagger
+## 3. Configuração do Swagger
 Edite o arquivo main.ts:
 typescriptCopiarimport { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -50,13 +50,13 @@ async function bootstrap() {
 }
 bootstrap();
 
-4. Criação do módulo Pokemon
+## 4. Criação do módulo Pokemon
 Crie a estrutura de diretórios:
 bashCopiarnest g module pokemon
 nest g controller pokemon
 nest g service pokemon
 
-5. Enum de Types
+## 5. Enum de Types
 Crie o arquivo pokemon/enum/pokemon-type.enum.ts:
 typescriptCopiarexport enum PokemonType {
   NORMAL = 'NORMAL',
@@ -79,7 +79,7 @@ typescriptCopiarexport enum PokemonType {
   FAIRY = 'FAIRY',
 }
 
-6. Schema do Pokémon (MongoDB)
+## 6. Schema do Pokémon (MongoDB)
 Crie o arquivo pokemon/schemas/pokemon.schema.ts:
 typescriptCopiarimport { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
@@ -110,7 +110,7 @@ export class Pokemon {
 
 export const PokemonSchema = SchemaFactory.createForClass(Pokemon);
 
-7. DTOs (Data Transfer Objects)
+## 7. DTOs (Data Transfer Objects)
 Crie os arquivos de DTOs:
 pokemon/dto/create-pokemon.dto.ts:
 typescriptCopiarimport { ApiProperty } from '@nestjs/swagger';
@@ -168,7 +168,7 @@ export class UpdatePokemonDto {
   description?: string;
 }
 
-8. Repository Pattern
+## 8. Repository Pattern
 Crie a interface do repositório pokemon/repository/pokemon-repository.interface.ts:
 typescriptCopiarimport { Pokemon, PokemonDocument } from '../schemas/pokemon.schema';
 import { CreatePokemonDto } from '../dto/create-pokemon.dto';
@@ -223,7 +223,7 @@ export class PokemonMongoRepository implements PokemonRepository {
   }
 }
 
-9. Service
+## 9. Service
 Edite o arquivo pokemon/pokemon.service.ts:
 typescriptCopiarimport { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
@@ -275,7 +275,7 @@ export class PokemonService {
   }
 }
 
-10. Controller
+## 10. Controller
 Edite o arquivo pokemon/pokemon.controller.ts:
 typescriptCopiarimport { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
@@ -339,7 +339,7 @@ export class PokemonController {
   }
 }
 
-11. Configurando o módulo Pokemon
+## 11. Configurando o módulo Pokemon
 Edite o arquivo pokemon/pokemon.module.ts:
 typescriptCopiarimport { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -364,7 +364,7 @@ import { PokemonMongoRepository } from './repository/pokemon-repository.mongodb'
 })
 export class PokemonModule {}
 
-12. Executando a aplicação
+## 12. Executando a aplicação
 Agora inicie o MongoDB (certifique-se de que o MongoDB está instalado em sua máquina):
 bashCopiar# Em um terminal separado
 mongod
@@ -374,34 +374,34 @@ Acesse o Swagger para testar a API: http://localhost:3000/api
 
 
 
-Princípios SOLID aplicados:
+## Princípios SOLID aplicados:
 
-S - Single Responsibility Principle: Cada classe tem uma única responsabilidade
+### S - Single Responsibility Principle: Cada classe tem uma única responsabilidade
 
 Controller lida com HTTP
 Service lida com a lógica de negócios
 Repository lida com o acesso aos dados
 
 
-O - Open/Closed Principle: O código está aberto para extensão, fechado para modificação
+### O - Open/Closed Principle: O código está aberto para extensão, fechado para modificação
 
 A interface do repositório permite adicionar novos métodos sem alterar o código existente
 
 
-L - Liskov Substitution Principle: Usamos interfaces e classes que podem ser substituídas
+### L - Liskov Substitution Principle: Usamos interfaces e classes que podem ser substituídas
 
 A implementação do repositório pode ser trocada sem afetar o restante do código
 
 
-I - Interface Segregation Principle: Interfaces específicas para necessidades específicas
+### I - Interface Segregation Principle: Interfaces específicas para necessidades específicas
 
 Interface PokemonRepository define apenas métodos necessários
 
 
-D - Dependency Inversion Principle: Dependências são injetadas e baseadas em abstrações
+### D - Dependency Inversion Principle: Dependências são injetadas e baseadas em abstrações
 
 Service depende da interface PokemonRepository, não da implementação concreta
 
 
 
-Este projeto apresenta uma API completa para gerenciar Pokémons com todos os padrões solicitados: DTOs, Service, Controller, Schema, Repository, e o enum de tipos.
+#### Este projeto apresenta uma API completa para gerenciar Pokémons com todos os padrões solicitados: DTOs, Service, Controller, Schema, Repository, e o enum de tipos.
