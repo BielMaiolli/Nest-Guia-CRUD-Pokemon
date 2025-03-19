@@ -485,3 +485,7 @@ pokemon-api/
 ├── tsconfig.build.json              # Configuração de build do TypeScript
 └── README.md                        # Documentação do projeto
 ````
+
+### Há muitos pontos que podemos melhorar, como a utilização da config do Swagger fora da main.ts e sim em uma pasta "Configs -> SwaggerConfig -> SwaggerConfig.ts", além disso a utilização de um .env para colocar informações como DB_URL, além desses exemplos existem muitos outros, espero que tenha te ajudado um pouco a entender como funciona a criação de uma Rest API com NestJs.
+
+####  Para mais dúvidas, sugiro a utilização de IA para explicação de trechos de códigos e etc.
