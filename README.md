@@ -449,3 +449,39 @@ Service depende da interface PokemonRepository, não da implementação concreta
 
 
 #### Este projeto apresenta uma API completa para gerenciar Pokémons com todos os padrões solicitados: DTOs, Service, Controller, Schema, Repository, e o enum de tipos.
+
+
+## Estrutura de Pastas final (talvez)
+````
+pokemon-api/
+├── node_modules/
+├── src/
+│   ├── main.ts                      # Ponto de entrada da aplicação com configuração do Swagger
+│   ├── app.module.ts                # Módulo principal com conexão MongoDB
+│   ├── app.controller.ts            # Controller principal (gerado pelo CLI)
+│   ├── app.service.ts               # Service principal (gerado pelo CLI)
+│   ├── pokemon/                     # Módulo Pokémon
+│   │   ├── pokemon.module.ts        # Configuração do módulo
+│   │   ├── pokemon.controller.ts    # Controller com endpoints da API
+│   │   ├── pokemon.service.ts       # Service com lógica de negócios
+│   │   ├── dto/                     # Data Transfer Objects
+│   │   │   ├── create-pokemon.dto.ts # DTO para criação
+│   │   │   └── update-pokemon.dto.ts # DTO para atualização
+│   │   ├── enum/                    # Enumerações
+│   │   │   └── pokemon-type.enum.ts # Tipos de Pokémon
+│   │   ├── schemas/                 # Schemas do MongoDB
+│   │   │   └── pokemon.schema.ts    # Schema do Pokémon
+│   │   └── repository/              # Padrão Repository
+│   │       ├── pokemon-repository.interface.ts  # Interface do repositório
+│   │       └── pokemon-repository.mongodb.ts    # Implementação MongoDB
+├── test/                            # Pasta para testes (gerada pelo CLI)
+├── .eslintrc.js                     # Configuração do ESLint
+├── .gitignore                       # Arquivos ignorados pelo Git
+├── .prettierrc                      # Configuração do Prettier
+├── nest-cli.json                    # Configuração do NestJS CLI
+├── package.json                     # Dependências e scripts
+├── package-lock.json                # Versões específicas das dependências
+├── tsconfig.json                    # Configuração do TypeScript
+├── tsconfig.build.json              # Configuração de build do TypeScript
+└── README.md                        # Documentação do projeto
+````
