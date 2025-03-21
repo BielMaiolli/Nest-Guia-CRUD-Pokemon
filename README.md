@@ -1,4 +1,3 @@
-Vou fazer algumas mudanças talvez, testei e não deu muito certo.
 ### Aqui está um guia passo a passo para desenvolver uma aplicação CRUD de Pokémon usando NestJS com MongoDB (Mongoose) e Swagger, seguindo os princípios SOLID.
 
 # Guia de Aplicação NestJS com MongoDB + Swagger: CRUD de Pokémon
