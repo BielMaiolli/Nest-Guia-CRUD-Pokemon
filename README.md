@@ -22,27 +22,7 @@ Instale as dependências necessárias:
 npm install @nestjs/mongoose mongoose @nestjs/swagger class-validator class-transformer
 ````
 
-## 2. Configuração do MongoDB
-Edite o arquivo app.module.ts:
-````
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { PokemonModule } from './pokemon/pokemon.module';
-
-@Module({
-  imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/pokemon-db'),
-    PokemonModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
-````
-
-## 3. Configuração do Swagger
+## 2. Configuração do Swagger
 Edite o arquivo main.ts:
 ````
 import { NestFactory } from '@nestjs/core';
@@ -66,12 +46,32 @@ async function bootstrap() {
 bootstrap();
 ````
 
-## 4. Criação do módulo Pokemon
+## 3. Criação do módulo Pokemon
 Crie a estrutura de diretórios:
 ````
 nest g module pokemon
 nest g controller pokemon
 nest g service pokemon
+````
+
+## 4. Configuração do MongoDB
+Edite o arquivo app.module.ts:
+````
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { PokemonModule } from './pokemon/pokemon.module';
+
+@Module({
+  imports: [
+    MongooseModule.forRoot('mongodb://localhost:27017/pokemon-db'),
+    PokemonModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
 ````
 
 ## 5. Enum de Types
@@ -120,12 +120,6 @@ export class Pokemon {
   types: PokemonType[];
 
   @Prop()
-  height: number;
-
-  @Prop()
-  weight: number;
-
-  @Prop()
   description: string;
 }
 
@@ -153,12 +147,6 @@ export class CreatePokemonDto {
   })
   types: PokemonType[];
 
-  @ApiProperty({ description: 'Altura do Pokémon em metros' })
-  height: number;
-
-  @ApiProperty({ description: 'Peso do Pokémon em kg' })
-  weight: number;
-
   @ApiProperty({ description: 'Descrição do Pokémon' })
   description: string;
 }
@@ -184,12 +172,6 @@ export class UpdatePokemonDto {
   })
   types?: PokemonType[];
 
-  @ApiProperty({ description: 'Altura do Pokémon em metros', required: false })
-  height?: number;
-
-  @ApiProperty({ description: 'Peso do Pokémon em kg', required: false })
-  weight?: number;
-
   @ApiProperty({ description: 'Descrição do Pokémon', required: false })
   description?: string;
 }
@@ -198,17 +180,17 @@ export class UpdatePokemonDto {
 ## 8. Repository Pattern
 Crie a interface do repositório pokemon/repository/pokemon-repository.interface.ts:
 ````
-import { Pokemon, PokemonDocument } from '../schemas/pokemon.schema';
-import { CreatePokemonDto } from '../dto/create-pokemon.dto';
-import { UpdatePokemonDto } from '../dto/update-pokemon.dto';
+import { CreatePokemonDto } from "../dto/create-pokemon.dto";
+import { UpdatePokemonDto } from "../dto/update-pokemon.dto";
+import { Pokemon } from "../schemas/pokemon.schema";
 
-export interface PokemonRepository {
-  findAll(): Promise<Pokemon[]>;
-  findById(id: string): Promise<Pokemon>;
-  findByNumber(number: number): Promise<Pokemon>;
-  create(createPokemonDto: CreatePokemonDto): Promise<Pokemon>;
-  update(id: string, updatePokemonDto: UpdatePokemonDto): Promise<Pokemon>;
-  remove(id: string): Promise<Pokemon>;
+export abstract class PokemonRepository {
+    abstract findAll(): Promise<Pokemon[] | null>;
+    abstract findById(id: string): Promise<Pokemon | null>;
+    abstract findByNumber(number: number): Promise<Pokemon | null>;
+    abstract create(createPokemonDto: CreatePokemonDto): Promise<Pokemon>;
+    abstract update(id: string, updatePokemonDto: UpdatePokemonDto): Promise<Pokemon | null>;
+    abstract remove(id: string): Promise<Pokemon | null>;
 }
 ````
 
@@ -232,11 +214,11 @@ export class PokemonMongoRepository implements PokemonRepository {
     return this.pokemonModel.find().exec();
   }
 
-  async findById(id: string): Promise<Pokemon> {
+  async findById(id: string): Promise<Pokemon | null> {
     return this.pokemonModel.findById(id).exec();
   }
 
-  async findByNumber(number: number): Promise<Pokemon> {
+  async findByNumber(number: number): Promise<Pokemon | null> {
     return this.pokemonModel.findOne({ number }).exec();
   }
 
@@ -245,156 +227,167 @@ export class PokemonMongoRepository implements PokemonRepository {
     return newPokemon.save();
   }
 
-  async update(id: string, updatePokemonDto: UpdatePokemonDto): Promise<Pokemon> {
+  async update(id: string, updatePokemonDto: UpdatePokemonDto): Promise<Pokemon | null> {
     return this.pokemonModel.findByIdAndUpdate(id, updatePokemonDto, { new: true }).exec();
   }
 
-  async remove(id: string): Promise<Pokemon> {
+  async remove(id: string): Promise<Pokemon | null> {
     return this.pokemonModel.findByIdAndDelete(id).exec();
   }
 }
 ````
 
+Agora, crie a implementação do repositório pokemon/pokemon.constants.ts:
+````
+export const POKEMON_REPOSITORY = 'POKEMON_REPOSITORY';
+```` 
+
 ## 9. Service
 Edite o arquivo pokemon/pokemon.service.ts:
 ````
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PokemonRepository } from './repository/pokemon-repository.interface';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto';
-import { PokemonRepository } from './repository/pokemon-repository.interface';
 
 @Injectable()
 export class PokemonService {
-  constructor(private readonly pokemonRepository: PokemonRepository) {}
 
-  async create(createPokemonDto: CreatePokemonDto) {
-    return this.pokemonRepository.create(createPokemonDto);
-  }
+    constructor(
+      @Inject('POKEMON_REPOSITORY')
+      private readonly pokemonRepository: PokemonRepository) {}
 
-  async findAll() {
-    return this.pokemonRepository.findAll();
-  }
-
-  async findOne(id: string) {
-    const pokemon = await this.pokemonRepository.findById(id);
-    if (!pokemon) {
-      throw new NotFoundException(`Pokemon #${id} not found`);
+    async create(createPokemonDto: CreatePokemonDto) {
+        return this.pokemonRepository.create(createPokemonDto);
     }
-    return pokemon;
-  }
 
-  async findByNumber(number: number) {
-    const pokemon = await this.pokemonRepository.findByNumber(number);
-    if (!pokemon) {
-      throw new NotFoundException(`Pokemon #${number} not found`);
+    async findAll() {
+        return this.pokemonRepository.findAll();
     }
-    return pokemon;
-  }
 
-  async update(id: string, updatePokemonDto: UpdatePokemonDto) {
-    const pokemon = await this.pokemonRepository.update(id, updatePokemonDto);
-    if (!pokemon) {
-      throw new NotFoundException(`Pokemon #${id} not found`);
+    async findOne(id: string) {
+        const pokemon = await this.pokemonRepository.findById(id);
+        if(!pokemon){
+            throw new NotFoundException(`Pokemon #${id} not found`);
+        }
+        return pokemon;
     }
-    return pokemon;
-  }
 
-  async remove(id: string) {
-    const pokemon = await this.pokemonRepository.remove(id);
-    if (!pokemon) {
-      throw new NotFoundException(`Pokemon #${id} not found`);
-    }
-    return pokemon;
-  }
+    async findByNumber(number: number) {
+        const pokemon = await this.pokemonRepository.findByNumber(number);
+        if (!pokemon) {
+          throw new NotFoundException(`Pokemon #${number} not found`);
+        }
+        return pokemon;
+      }
+    
+    async update(id: string, updatePokemonDto: UpdatePokemonDto) {
+        const pokemon = await this.pokemonRepository.update(id, updatePokemonDto);
+        if (!pokemon) {
+          throw new NotFoundException(`Pokemon #${id} not found`);
+        }
+        return pokemon;
+      }
+    
+      async remove(id: string) {
+        const pokemon = await this.pokemonRepository.remove(id);
+        if (!pokemon) {
+          throw new NotFoundException(`Pokemon #${id} not found`);
+        }
+        return pokemon;
+      }
 }
 ````
 
 ## 10. Controller
 Edite o arquivo pokemon/pokemon.controller.ts:
 ````
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { PokemonService } from './pokemon.service';
 import { CreatePokemonDto } from './dto/create-pokemon.dto';
+import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto';
 
-@ApiTags('pokemon')
 @Controller('pokemon')
 export class PokemonController {
-  constructor(private readonly pokemonService: PokemonService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Criar um novo Pokémon' })
-  @ApiResponse({ status: 201, description: 'Pokémon criado com sucesso.' })
-  async create(@Body() createPokemonDto: CreatePokemonDto) {
-    return await this.pokemonService.create(createPokemonDto);
-  }
+    constructor(private readonly pokemonService: PokemonService) {}
 
-  @Get()
-  @ApiOperation({ summary: 'Listar todos os Pokémons' })
-  @ApiResponse({ status: 200, description: 'Lista de Pokémons retornada com sucesso.' })
-  async findAll() {
-    return await this.pokemonService.findAll();
-  }
+    @Post()
+    @ApiOperation({ summary: 'Criar um novo Pokémon' })
+    @ApiResponse({ status: 201, description: "Pokemon criado com sucesso." })
+    async create(@Body() CreatePokemonDto: CreatePokemonDto) {
+        return await this.pokemonService.create(CreatePokemonDto);
+    }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Buscar um Pokémon pelo ID' })
-  @ApiParam({ name: 'id', description: 'ID do Pokémon' })
-  @ApiResponse({ status: 200, description: 'Pokémon encontrado com sucesso.' })
-  @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
-  async findOne(@Param('id') id: string) {
-    return await this.pokemonService.findOne(id);
-  }
-
-  @Get('number/:number')
-  @ApiOperation({ summary: 'Buscar um Pokémon pelo número na Pokédex' })
-  @ApiParam({ name: 'number', description: 'Número do Pokémon na Pokédex' })
-  @ApiResponse({ status: 200, description: 'Pokémon encontrado com sucesso.' })
-  @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
-  async findByNumber(@Param('number') number: number) {
-    return await this.pokemonService.findByNumber(number);
-  }
-
-  @Patch(':id')
-  @ApiOperation({ summary: 'Atualizar um Pokémon' })
-  @ApiParam({ name: 'id', description: 'ID do Pokémon' })
-  @ApiResponse({ status: 200, description: 'Pokémon atualizado com sucesso.' })
-  @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
-  async update(@Param('id') id: string, @Body() updatePokemonDto: UpdatePokemonDto) {
-    return await this.pokemonService.update(id, updatePokemonDto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Remover um Pokémon' })
-  @ApiParam({ name: 'id', description: 'ID do Pokémon' })
-  @ApiResponse({ status: 200, description: 'Pokémon removido com sucesso.' })
-  @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
-  async remove(@Param('id') id: string) {
-    return await this.pokemonService.remove(id);
-  }
+    @Get()
+    @ApiOperation({ summary: 'Listar todos os Pokémons' })
+    @ApiResponse({ status: 200, description: 'Lista de Pokémons retornada com sucesso.' })
+    async findAll() {
+      return await this.pokemonService.findAll();
+    }
+  
+    @Get(':id')
+    @ApiOperation({ summary: 'Buscar um Pokémon pelo ID' })
+    @ApiParam({ name: 'id', description: 'ID do Pokémon' })
+    @ApiResponse({ status: 200, description: 'Pokémon encontrado com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
+    async findOne(@Param('id') id: string) {
+      return await this.pokemonService.findOne(id);
+    }
+  
+    @Get('number/:number')
+    @ApiOperation({ summary: 'Buscar um Pokémon pelo número na Pokédex' })
+    @ApiParam({ name: 'number', description: 'Número do Pokémon na Pokédex' })
+    @ApiResponse({ status: 200, description: 'Pokémon encontrado com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
+    async findByNumber(@Param('number') number: number) {
+      return await this.pokemonService.findByNumber(number);
+    }
+  
+    @Patch(':id')
+    @ApiOperation({ summary: 'Atualizar um Pokémon' })
+    @ApiParam({ name: 'id', description: 'ID do Pokémon' })
+    @ApiResponse({ status: 200, description: 'Pokémon atualizado com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
+    async update(@Param('id') id: string, @Body() updatePokemonDto: UpdatePokemonDto) {
+      return await this.pokemonService.update(id, updatePokemonDto);
+    }
+  
+    @Delete(':id')
+    @ApiOperation({ summary: 'Remover um Pokémon' })
+    @ApiParam({ name: 'id', description: 'ID do Pokémon' })
+    @ApiResponse({ status: 200, description: 'Pokémon removido com sucesso.' })
+    @ApiResponse({ status: 404, description: 'Pokémon não encontrado.' })
+    async remove(@Param('id') id: string) {
+      return await this.pokemonService.remove(id);
+    }
+  
 }
+
 ````
 
 ## 11. Configurando o módulo Pokemon
 Edite o arquivo pokemon/pokemon.module.ts:
 ````
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { Module } from '@nestjs/common'; // Esta importação também parece estar faltando
 import { PokemonController } from './pokemon.controller';
 import { PokemonService } from './pokemon.service';
+import { MongooseModule } from '@nestjs/mongoose';
 import { Pokemon, PokemonSchema } from './schemas/pokemon.schema';
-import { PokemonRepository } from './repository/pokemon-repository.interface';
 import { PokemonMongoRepository } from './repository/pokemon-repository.mongodb';
+import { PokemonRepository } from './repository/pokemon-repository.interface';
+import { POKEMON_REPOSITORY } from './pokemon.constants';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Pokemon.name, schema: PokemonSchema }])
+    MongooseModule.forFeature([{ name: Pokemon.name, schema: PokemonSchema}])
   ],
   controllers: [PokemonController],
   providers: [
     PokemonService,
     {
-      provide: PokemonRepository,
+      provide: POKEMON_REPOSITORY,
       useClass: PokemonMongoRepository,
     },
   ],
